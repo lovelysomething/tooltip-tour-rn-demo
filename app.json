@@ -1,10 +1,11 @@
 {
   "expo": {
-    "name": "tooltip-tour-rn-demo",
+    "name": "TT Demo",
     "slug": "tooltip-tour-rn-demo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "tooltiptour",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,13 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lovelysomething.ttdemo"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.lovelysomething.ttdemo",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
