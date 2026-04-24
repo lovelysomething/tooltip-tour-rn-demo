@@ -1,8 +1,8 @@
 import React, { useRef } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  FlatList, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet, FlatList,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTTPage, useTTTarget, TooltipTour } from 'tooltip-tour-react-native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '../App'
@@ -36,7 +36,7 @@ export default function FeedScreen({ navigation }: Props) {
   }, [])
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header} ref={headerRef as any}>
         <View>
           <TouchableOpacity onPress={() => navigation.goBack()}>

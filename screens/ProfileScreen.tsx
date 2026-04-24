@@ -1,8 +1,8 @@
 import React from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTTPage, useTTTarget } from 'tooltip-tour-react-native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '../App'
@@ -20,7 +20,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const signOutRef     = useTTTarget('signOutButton')
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Back */}
