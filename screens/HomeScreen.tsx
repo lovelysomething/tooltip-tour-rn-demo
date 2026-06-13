@@ -1,19 +1,90 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useTTPage, useTTTarget } from 'tooltip-tour-react-native'
+import { useTTPage, useTTTarget, TooltipTour, TTViewRegistry } from 'tooltip-tour-react-native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '../App'
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Home'> }
 
+// ── Sub-components so hooks can be used per-item ───────────────────────────
+
+function StatBox({ id, value, label }: { id: string; value: string; label: string }) {
+  const ref = useTTTarget(id)
+  return (
+    <View ref={ref as any} style={styles.statBox}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  )
+}
+
+function ActivityItem({ id, icon, text, sub, color }: {
+  id: string; icon: string; text: string; sub: string; color: string
+}) {
+  const ref = useTTTarget(id)
+  return (
+    <View ref={ref as any} style={styles.activityRow}>
+      <View style={[styles.activityDot, { backgroundColor: color + '22' }]}>
+        <Text style={{ fontSize: 14 }}>{icon}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.activityText}>{text}</Text>
+        <Text style={styles.activitySub}>{sub}</Text>
+      </View>
+    </View>
+  )
+}
+
+function TipItem({ id, title, body }: { id: string; title: string; body: string }) {
+  const ref = useTTTarget(id)
+  return (
+    <View ref={ref as any} style={styles.tipCard}>
+      <Text style={styles.tipTitle}>{title}</Text>
+      <Text style={styles.tipBody}>{body}</Text>
+    </View>
+  )
+}
+
+function QuickLinkBtn({ id, emoji, label, onPress }: {
+  id: string; emoji: string; label: string; onPress: () => void
+}) {
+  const ref = useTTTarget(id)
+  return (
+    <TouchableOpacity ref={ref as any} style={styles.quickBtn} onPress={onPress} activeOpacity={0.85}>
+      <Text style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</Text>
+      <Text style={styles.quickLabel}>{label}</Text>
+    </TouchableOpacity>
+  )
+}
+
+// ── Screen ─────────────────────────────────────────────────────────────────
+
 export default function HomeScreen({ navigation }: Props) {
   useTTPage('home')
 
+  // ── Scroll-to-target for guided tours ─────────────────────────────────────
+  const scrollRef = useRef<ScrollView>(null)
+  useEffect(() => {
+    TooltipTour.registerScrollable('home', (targetId) => {
+      const elemRef = TTViewRegistry.getRef(targetId)
+      if (!elemRef?.current || !scrollRef.current) return
+      // measureLayout gives position relative to the scroll view's content
+      elemRef.current.measureLayout(
+        scrollRef.current as any,
+        (_x: number, y: number) => {
+          scrollRef.current!.scrollTo({ y: Math.max(0, y - 120), animated: true })
+        },
+        () => {}
+      )
+    })
+  }, [])
+
   const welcomeRef   = useTTTarget('welcomeHeading')
   const subtitleRef  = useTTTarget('welcomeSubtitle')
+  const statsRowRef  = useTTTarget('statsRow')
   const card1Ref     = useTTTarget('featureCardAnalytics')
   const card2Ref     = useTTTarget('featureCardTours')
   const card3Ref     = useTTTarget('featureCardInspector')
@@ -21,10 +92,11 @@ export default function HomeScreen({ navigation }: Props) {
   const profileRef   = useTTTarget('profileNavButton')
   const recentRef    = useTTTarget('recentActivitySection')
   const tipsRef      = useTTTarget('tipsSection')
+  const quickRef     = useTTTarget('quickLinksSection')
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
         <View style={styles.header}>
@@ -33,7 +105,7 @@ export default function HomeScreen({ navigation }: Props) {
             <Text ref={subtitleRef} style={styles.subtitle}>Here's what's happening today.</Text>
           </View>
           <TouchableOpacity
-            ref={profileRef}
+            ref={profileRef as any}
             onPress={() => navigation.navigate('Profile')}
             style={styles.avatarBtn}
           >
@@ -42,24 +114,17 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
 
         {/* Stats row */}
-        <View style={styles.statsRow}>
-          {[
-            { label: 'Tours Active',      value: '3'     },
-            { label: 'Views This Month',  value: '1,240' },
-            { label: 'Completion Rate',   value: '68%'   },
-          ].map(stat => (
-            <View key={stat.label} style={styles.statBox}>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
+        <View ref={statsRowRef as any} style={styles.statsRow}>
+          <StatBox id="statToursActive"     value="3"     label="Tours Active" />
+          <StatBox id="statViewsThisMonth"  value="1,240" label="Views This Month" />
+          <StatBox id="statCompletionRate"  value="68%"   label="Completion Rate" />
         </View>
 
         {/* Feature cards */}
         <Text style={styles.sectionTitle}>Features</Text>
 
         <TouchableOpacity
-          ref={card1Ref}
+          ref={card1Ref as any}
           style={styles.card}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Analytics')}
@@ -75,7 +140,7 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          ref={card2Ref}
+          ref={card2Ref as any}
           style={styles.card}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Feed')}
@@ -91,7 +156,7 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          ref={card3Ref}
+          ref={card3Ref as any}
           style={styles.card}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('Profile')}
@@ -107,63 +172,38 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         {/* CTA */}
-        <TouchableOpacity ref={ctaRef} style={styles.cta} activeOpacity={0.85}
+        <TouchableOpacity ref={ctaRef as any} style={styles.cta} activeOpacity={0.85}
           onPress={() => navigation.navigate('Feed')}>
           <Text style={styles.ctaText}>Get Started →</Text>
         </TouchableOpacity>
 
         {/* Recent activity */}
-        <Text ref={recentRef} style={[styles.sectionTitle, { marginTop: 32 }]}>Recent Activity</Text>
-        {[
-          { icon: '✅', text: 'Getting Started tour completed',  sub: '2 mins ago',   color: '#16a34a' },
-          { icon: '👁️', text: 'Dashboard Overview — step 3 viewed', sub: '14 mins ago', color: '#1925AA' },
-          { icon: '🚀', text: 'New tour published: Mobile SDK',  sub: '1 hour ago',   color: '#d97706' },
-          { icon: '📈', text: 'Analytics: +18% views this week', sub: '3 hours ago',  color: '#0891b2' },
-          { icon: '✅', text: 'Visual Inspector tour completed',  sub: 'Yesterday',    color: '#16a34a' },
-        ].map((item, i) => (
-          <View key={i} style={styles.activityRow}>
-            <View style={[styles.activityDot, { backgroundColor: item.color + '22' }]}>
-              <Text style={{ fontSize: 14 }}>{item.icon}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.activityText}>{item.text}</Text>
-              <Text style={styles.activitySub}>{item.sub}</Text>
-            </View>
-          </View>
-        ))}
+        <View ref={recentRef as any} style={{ marginTop: 32 }}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <ActivityItem id="recentActivity0" icon="✅" text="Getting Started tour completed"       sub="2 mins ago"   color="#16a34a" />
+          <ActivityItem id="recentActivity1" icon="👁️" text="Dashboard Overview — step 3 viewed"  sub="14 mins ago"  color="#1925AA" />
+          <ActivityItem id="recentActivity2" icon="🚀" text="New tour published: Mobile SDK"       sub="1 hour ago"   color="#d97706" />
+          <ActivityItem id="recentActivity3" icon="📈" text="Analytics: +18% views this week"      sub="3 hours ago"  color="#0891b2" />
+          <ActivityItem id="recentActivity4" icon="✅" text="Visual Inspector tour completed"       sub="Yesterday"    color="#16a34a" />
+        </View>
 
         {/* Tips section */}
-        <Text ref={tipsRef} style={[styles.sectionTitle, { marginTop: 32 }]}>Tips</Text>
-        {[
-          { title: 'Keep tours under 6 steps',      body: 'Users drop off sharply after step 5. Aim for focused, high-value steps.' },
-          { title: 'Use the splash carousel',        body: 'A 2–3 slide carousel before the tour boosts start rates by up to 40%.' },
-          { title: 'Test with the Visual Inspector', body: 'Scan the QR code from any dashboard step to capture identifiers live.' },
-          { title: 'Set maxShows to 3',              body: 'Showing the welcome card more than 3 times annoys returning users.' },
-        ].map((tip, i) => (
-          <View key={i} style={styles.tipCard}>
-            <Text style={styles.tipTitle}>{tip.title}</Text>
-            <Text style={styles.tipBody}>{tip.body}</Text>
-          </View>
-        ))}
+        <View ref={tipsRef as any} style={{ marginTop: 32 }}>
+          <Text style={styles.sectionTitle}>Tips</Text>
+          <TipItem id="tip0" title="Keep tours under 6 steps"       body="Users drop off sharply after step 5. Aim for focused, high-value steps." />
+          <TipItem id="tip1" title="Use the splash carousel"         body="A 2–3 slide carousel before the tour boosts start rates by up to 40%." />
+          <TipItem id="tip2" title="Test with the Visual Inspector"  body="Scan the QR code from any dashboard step to capture identifiers live." />
+          <TipItem id="tip3" title="Set maxShows to 3"               body="Showing the welcome card more than 3 times annoys returning users." />
+        </View>
 
         {/* Quick links */}
-        <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Quick Links</Text>
-        <View style={styles.quickRow}>
-          {[
-            { label: 'Analytics',  emoji: '📊', screen: 'Analytics' as const },
-            { label: 'My Tours',   emoji: '🗺️', screen: 'Feed' as const      },
-            { label: 'Profile',    emoji: '👤', screen: 'Profile' as const   },
-          ].map(link => (
-            <TouchableOpacity
-              key={link.label}
-              style={styles.quickBtn}
-              onPress={() => navigation.navigate(link.screen)}
-              activeOpacity={0.85}
-            >
-              <Text style={{ fontSize: 22, marginBottom: 6 }}>{link.emoji}</Text>
-              <Text style={styles.quickLabel}>{link.label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View ref={quickRef as any} style={{ marginTop: 32 }}>
+          <Text style={styles.sectionTitle}>Quick Links</Text>
+          <View style={styles.quickRow}>
+            <QuickLinkBtn id="quickLinkAnalytics" emoji="📊" label="Analytics" onPress={() => navigation.navigate('Analytics')} />
+            <QuickLinkBtn id="quickLinkTours"     emoji="🗺️" label="My Tours"  onPress={() => navigation.navigate('Feed')} />
+            <QuickLinkBtn id="quickLinkProfile"   emoji="👤" label="Profile"   onPress={() => navigation.navigate('Profile')} />
+          </View>
         </View>
 
       </ScrollView>
